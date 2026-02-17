@@ -5,6 +5,10 @@ void XmlParser::Init(const char* path, GLuint firstTextureID)
 	this->firstTextureID = firstTextureID;
 
 	pugi::xml_parse_result result = doc.load_file(path); // Load the XML file
+	if (!result)
+	{
+		std::cout << "ERROR: Failed to load XML file '" << path << "': " << result.description() << std::endl;
+	}
 	scene = doc.child("scene"); // Create node for the scene
 }
 

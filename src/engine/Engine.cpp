@@ -18,6 +18,8 @@ int Engine::Init()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // GLFW version 3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // GLFW version 3.3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // GLFW uses CORE profile
+
+	return 0;
 }
 
 void Engine::End(GLFWwindow* window) 
@@ -54,14 +56,11 @@ GLFWwindow* Engine::CreateWindow(int resX, int resY, bool fullscreen)
 	GLFWmonitor* primaryMonitor = fullscreen ? glfwGetPrimaryMonitor() : NULL;
 	GLFWwindow* window = glfwCreateWindow(resX, resY, "Pingu Engine", primaryMonitor, NULL); // Create window
 
-	if (!CheckWindowCreatedSuccessfully(window)) return;
+	if (!CheckWindowCreatedSuccessfully(window)) return nullptr;
 	glfwMakeContextCurrent(window); // Make window's context current
 
-	if (!LoadGlad()) return;
+	if (!LoadGlad()) return nullptr;
 
-	/* TODO: resX, resYand aspectRatio are computed after each frame
-	*  If I remove next lines program will crash because it needs these variables for camera I think.
-	*/
 	// Set resolution variables for further use
 	Engine::resX = resX;
 	Engine::resY = resY;

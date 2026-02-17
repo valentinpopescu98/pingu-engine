@@ -205,6 +205,11 @@ float Utils::Get3DObjectLongestSide(float x, float y, float z)
 
 float Utils::GetRandomFloat(float left, float right)
 {
-	srand(static_cast<unsigned>(time(0)));
+	static bool seeded = false;
+	if (!seeded)
+	{
+		srand(static_cast<unsigned>(time(0)));
+		seeded = true;
+	}
 	return left + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (right - left)));
 }
