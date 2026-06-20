@@ -58,18 +58,18 @@ void World::End()
 	GuiDrawer::End();
 	//particleSystem.End();
 
-	for (Mesh meshObject : meshObjects)
+	for (Mesh& meshObject : meshObjects)
 	{
 		meshObject.DeleteBuffers(); // Delete buffers
 		meshObject.DeleteTextures(); // Delete textures
 	}
 
-	for (Model modelLight : modelLights)
+	for (Model& modelLight : modelLights)
 	{
 		modelLight.DeleteBuffers(); // Delete buffers
 		modelLight.DeleteTextures(); // Delete textures
 	}
-	for (Model modelObject : modelObjects)
+	for (Model& modelObject : modelObjects)
 	{
 		modelObject.DeleteBuffers(); // Delete buffers
 		modelObject.DeleteTextures(); // Delete textures

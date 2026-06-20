@@ -24,9 +24,9 @@ void CollisionManager::UncollideMeshToMesh(std::vector<Mesh>& meshObjects)
 
 			if (distance <= firstRadius + secondRadius)
 			{
-				meshObjects[i].position.x = meshObjects[j].position.x + secondRadius + firstRadius;
-				meshObjects[i].position.y = meshObjects[j].position.y + secondRadius + firstRadius;
-				meshObjects[i].position.z = meshObjects[j].position.z + secondRadius + firstRadius;
+				glm::vec3 diff = meshObjects[i].position - meshObjects[j].position;
+				if (diff == glm::vec3(0.0f)) diff = glm::vec3(1.0f, 0.0f, 0.0f);
+				meshObjects[i].position = meshObjects[j].position + glm::normalize(diff) * (firstRadius + secondRadius);
 			}
 		}
 	}
@@ -48,9 +48,9 @@ void CollisionManager::UncollideModelToModel(std::vector<Model>& modelObjects)
 
 			if (distance <= firstRadius + secondRadius)
 			{
-				modelObjects[i].position.x = modelObjects[j].position.x + secondRadius + firstRadius;
-				modelObjects[i].position.y = modelObjects[j].position.y + secondRadius + firstRadius;
-				modelObjects[i].position.z = modelObjects[j].position.z + secondRadius + firstRadius;
+				glm::vec3 diff = modelObjects[i].position - modelObjects[j].position;
+				if (diff == glm::vec3(0.0f)) diff = glm::vec3(1.0f, 0.0f, 0.0f);
+				modelObjects[i].position = modelObjects[j].position + glm::normalize(diff) * (firstRadius + secondRadius);
 			}
 		}
 	}
@@ -72,9 +72,9 @@ void CollisionManager::UncollideMeshToModel(std::vector<Mesh>& meshObjects, std:
 
 			if (distance <= firstRadius + secondRadius)
 			{
-				meshObjects[i].position.x = modelObjects[j].position.x + secondRadius + firstRadius;
-				meshObjects[i].position.y = modelObjects[j].position.y + secondRadius + firstRadius;
-				meshObjects[i].position.z = modelObjects[j].position.z + secondRadius + firstRadius;
+				glm::vec3 diff = meshObjects[i].position - modelObjects[j].position;
+				if (diff == glm::vec3(0.0f)) diff = glm::vec3(1.0f, 0.0f, 0.0f);
+				meshObjects[i].position = modelObjects[j].position + glm::normalize(diff) * (firstRadius + secondRadius);
 			}
 		}
 	}
@@ -96,9 +96,9 @@ void CollisionManager::UncollideModelToMesh(std::vector<Model>& modelObjects, st
 
 			if (distance <= firstRadius + secondRadius)
 			{
-				modelObjects[i].position.x = meshObjects[j].position.x + secondRadius + firstRadius;
-				modelObjects[i].position.y = meshObjects[j].position.y + secondRadius + firstRadius;
-				modelObjects[i].position.z = meshObjects[j].position.z + secondRadius + firstRadius;
+				glm::vec3 diff = modelObjects[i].position - meshObjects[j].position;
+				if (diff == glm::vec3(0.0f)) diff = glm::vec3(1.0f, 0.0f, 0.0f);
+				modelObjects[i].position = meshObjects[j].position + glm::normalize(diff) * (firstRadius + secondRadius);
 			}
 		}
 	}
