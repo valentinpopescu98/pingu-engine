@@ -1,0 +1,19 @@
+{
+  "name": "pingu-engine",
+  "version": "0.1.0",
+  "dependencies": [
+    {
+      "name": "glfw3",
+      "platform": "windows"
+    },
+    {
+      "name": "assimp",
+      "platform": "windows"
+    },
+    {
+      "name": "lua",
+      "platform": "windows"
+    }
+  ],
+  "builtin-baseline": "0c2a9ace1964b818b15f7ae50ba1c42404918a7b"
+}
