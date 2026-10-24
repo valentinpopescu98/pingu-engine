@@ -20,7 +20,7 @@ class Culler
 		static void ComputeSphereData(Camera& camera);
 		static int SphereInFrustum(Camera& camera, glm::vec3 spherePos, float radius);
 
-		static enum { OUTSIDE, INTERSECT, INSIDE };
+		enum { OUTSIDE, INTERSECT, INSIDE };
 		static glm::vec3 X, Y, Z; // Camera referential
 		static float sphereFactorX, sphereFactorY; // Variables required to test spheres
 		static float tang;
