@@ -1,6 +1,13 @@
 # General
 /*
 !.gitignore
+!/CMakeLists.txt
+!/vcpkg.json
+!/.github/
+!/.github/workflows/
+!/.github/workflows/*.yml
+!/.github/workflows/*.yaml
+!/README.md
 !icon.ico
 !imgui.ini
 !LICENSE.md
@@ -21,3 +28,6 @@
 !/vs/*.vcxproj.filters
 !/vs/*.vcxproj.user
 !/vs/resource.h
+
+# CMake outputs (root-level build directory is intentionally not tracked)
+/build/**

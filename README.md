@@ -77,25 +77,58 @@ AfterDrawing    — swap buffers, poll GLFW events
 
 ## Build
 
-**Dependencies** (all linked statically or via headers):
-- OpenGL 3.3+
-- [GLFW3](https://www.glfw.org/)
-- [GLAD](https://glad.dav1d.de/)
-- [GLM](https://github.com/g-truc/glm)
-- [Assimp](https://github.com/assimp/assimp)
-- [stb_image](https://github.com/nothings/stb)
-- [Dear ImGui](https://github.com/ocornut/imgui)
-- [pugixml](https://pugixml.org/)
-- [Lua 5.4.4](https://www.lua.org/)
+**Supported target:** x86_64 (64-bit) Windows and Linux; 32-bit x86 is not supported.
 
-**Build (CMake):**
+The engine uses C++17 and OpenGL 3.3 Core. GLAD, GLM, Dear ImGui, pugixml and stb are vendored as source/header dependencies. GLFW, Assimp and Lua use **vcpkg-managed dependencies on Windows** (including runtime `.dll` files); Linux uses vendored `.so` files under `deps/linux/x86_64/lib/`. The obsolete committed Windows DLLs and import libraries have been removed (issue #10). The application uses the same libraries conceptually on both systems; their binary formats and transitive dependencies differ.
+
+OpenGL implementation, Mesa/GPU drivers and system runtime libraries are **not** bundled. A working graphical environment and an OpenGL 3.3-capable driver are required to run the editor.
+
+### Ubuntu 22.04 / Linux x86_64
+
 ```bash
-git clone https://github.com/valentinpopescu98/pingu-engine
+git clone https://github.com/valentinpopescu98/pingu-engine.git
 cd pingu-engine
-mkdir build && cd build
-cmake ..
-cmake --build .
+sudo apt-get update
+sudo apt-get install -y build-essential cmake clang-14 libgl1-mesa-dev patchelf
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
+cmake --build build --parallel 2
+./build/bin/pingu-engine
 ```
+
+The build copies bundled Linux shared libraries to `build/bin/lib/` and configures ELF RUNPATH via `patchelf` to locate direct and transitive dependencies without `LD_LIBRARY_PATH`. For normal GUI operation, run from `build/bin` (or ensure resources are accessible relative to the current working directory).
+
+### Windows x86_64
+
+Install CMake, Ninja, Visual Studio C++ build tools, Clang/LLVM (`clang-cl`), and vcpkg. The root `vcpkg.json` declares the Windows-only dependencies (GLFW, Assimp, Lua) and fixes the registry baseline. For reproducibility, use the **same vcpkg tool commit** as CI: `0c2a9ace1964b818b15f7ae50ba1c42404918a7b`. Set `VCPKG_ROOT` to your vcpkg checkout, then run from a Visual Studio developer shell.
+
+```powershell
+git clone https://github.com/valentinpopescu98/pingu-engine.git
+cd pingu-engine
+git -C "$env:VCPKG_ROOT" fetch origin 0c2a9ace1964b818b15f7ae50ba1c42404918a7b
+git -C "$env:VCPKG_ROOT" checkout --detach 0c2a9ace1964b818b15f7ae50ba1c42404918a7b
+& "$env:VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
+cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --build build --parallel 2
+.\build\bin\pingu-engine.exe
+```
+
+CMake manifest-mode configuration installs packages in the project-local `build/vcpkg_installed/` directory (ignored by Git); a separate `vcpkg install` command is not required. The manifest and pinned registry select the dependency graph; the pinned vcpkg tool commit ensures CI and local builds use the same port definitions. Exact binary hashes can still differ with compiler/SDK/toolchain updates.
+
+Run the configure/build commands from a developer shell with the Visual Studio linker and Windows SDK available. The required DLLs and runtime resources are copied beside the executable. For Visual Studio or other multi-config generators, the output location can vary.
+
+### CI and portability
+
+GitHub Actions builds Windows 2022 and Ubuntu 22.04 in Debug and Release, then runs the **same Ubuntu 22.04 Release executable** on Ubuntu 24.04, Fedora 44 and a dated Arch Linux container. Windows Server 2025 separately checks that the Windows Server 2022 Release artifact's bundled DLLs load. Smoke tests create a GLFW window and OpenGL context using Xvfb and Mesa software rendering; they do **not** render a full scene or validate every engine subsystem.
+
+Linux bundled binaries were matched by SHA-256 to Ubuntu 22.04 packages (`libglfw3`, `libassimp5`, `liblua5.4-0`, `libdraco4`, `libminizip1`) during the initial audit. The build packages Ubuntu copyright files and provenance records; Windows binaries come from pinned vcpkg ports, with installed-package inventories and per-port copyright notices. The obsolete committed Windows DLLs were removed.
+
+### Third-party licenses and provenance
+
+Pingu Engine is MIT-licensed; bundled dependencies retain their own license terms. Windows builds use pinned vcpkg packages and collect installed-package copyright notices, package inventories and DLL hashes. Linux builds bundle the corresponding Ubuntu 22.04 package copyright notices and shared-library hashes. See [third-party license inventory](third_party/licenses/README.md) for the verified package provenance and redistribution notices.
+
+**Future x86 (32-bit) builds:** Not implemented. The intended future interface is x86_64 by default and explicit x86 selection only once matching 32-bit Windows/Linux dependencies and CI tests exist. A CMake flag alone cannot make the current 64-bit binaries compatible with x86.
+
+**Portability scope:** x86_64 only. Fedora and Arch images are pinned to a release/snapshot tag, but package-manager updates may still change installed dependencies. The smoke tests demonstrate initialization, not a guarantee of compatibility with every distribution or GPU.
 
 ---
 

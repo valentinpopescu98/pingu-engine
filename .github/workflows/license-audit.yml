@@ -1,0 +1,90 @@
+name: Release artifact license audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Completed CMake build workflow run ID containing the four artifacts'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit-release-artifacts:
+    name: Inspect packaged licenses / all four build artifacts
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download all four artifacts from selected build run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]] || { echo "run_id must be numeric"; exit 1; }
+          gh run download "$BUILD_RUN_ID" --repo "${{ github.repository }}" --pattern 'pingu-engine-*' --dir artifacts
+
+      - name: Verify extracted release contents and license inventories
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          root = Path("artifacts")
+          names = [
+              f"pingu-engine-{os}-{mode}"
+              for os in ("ubuntu-22.04", "windows-2022")
+              for mode in ("Debug", "Release")
+          ]
+          actual = {p.name for p in root.iterdir() if p.is_dir()}
+          assert actual == set(names), f"Expected exactly four artifacts; found {sorted(actual)}"
+
+          for name in names:
+              folder = root / name
+              notices = folder / "licenses"
+              assert notices.is_dir(), f"{name}: missing licenses directory"
+              common = [
+                  "PINGU-ENGINE-LICENSE.md", "GLAD-LICENSE.txt",
+                  "GLM-LICENSE.txt", "IMGUI-LICENSE.txt",
+                  "PUGIXML-LICENSE.txt", "STB-LICENSE.txt",
+                  "GLFW-LICENSE.txt", "ASSIMP-LICENSE.txt",
+                  "LUA-LICENSE.txt", "DRACO-LICENSE.txt",
+                  "MINIZIP-LICENSE.txt", "BINARY-PROVENANCE.txt"
+              ]
+              for filename in common:
+                  f = notices / filename
+                  assert f.is_file() and f.stat().st_size, f"{name}: missing/empty {filename}"
+
+              provenance = (notices / "BINARY-PROVENANCE.txt").read_text(errors="replace")
+              if "windows" in name:
+                  assert (folder / "pingu-engine.exe").is_file(), f"{name}: missing EXE"
+                  dlls = sorted(folder.glob("*.dll"))
+                  assert dlls, f"{name}: missing DLLs"
+                  for dll in dlls:
+                      assert dll.name in provenance and hashlib.sha256(dll.read_bytes()).hexdigest().lower() in provenance.lower(), f"{name}: missing/mismatched DLL hash for {dll.name}"
+                  manifest = notices / "VCPKG-INSTALLED-PACKAGES.txt"
+                  assert manifest.is_file() and manifest.stat().st_size, f"{name}: missing vcpkg package list"
+                  packages = re.findall(r"^([^: ]+):x64-windows +", manifest.read_text(errors="replace"), re.M)
+                  assert packages, f"{name}: could not parse installed vcpkg packages"
+                  for pkg in packages:
+                      copyright_file = notices / "vcpkg-packages" / f"{pkg}-copyright"
+                      assert copyright_file.is_file() and copyright_file.stat().st_size, f"{name}: missing copyright for {pkg}"
+                  print(f"PASS {name}: {len(dlls)} DLLs, {len(packages)} vcpkg notices, SHA-256 matched")
+              else:
+                  assert (folder / "pingu-engine").is_file(), f"{name}: missing executable"
+                  libs = sorted((folder / "lib").glob("*.so*"))
+                  assert libs, f"{name}: missing bundled ELF libraries"
+                  for lib in libs:
+                      assert lib.name in provenance, f"{name}: missing ELF provenance for {lib.name}"
+                  for pkg in ("libglfw3", "libassimp5", "liblua5.4-0", "libdraco4", "libminizip1"):
+                      copyright_file = notices / "ubuntu-packages" / f"{pkg}-copyright"
+                      assert copyright_file.is_file() and copyright_file.stat().st_size, f"{name}: missing copyright for {pkg}"
+                  print(f"PASS {name}: {len(libs)} ELF libraries, 5 Ubuntu package notices")
+          PY
+
