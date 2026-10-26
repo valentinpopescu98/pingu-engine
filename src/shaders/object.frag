@@ -40,7 +40,7 @@ void main()
 		//textNorm = texture(texture_normal1, textCoord);
 	}
 
-	vec3 outNormal = normalize(normal); // Normalize the normals (make it in range [0, 1])
+	vec3 outNormal = normalize(normal); // Normalize the interpolated world-space normal to unit length
 
 	vec3 ambient = material.ambient; // Ambient light value
 
@@ -49,12 +49,12 @@ void main()
 	   Take the maximum between this and 0 because the higher the cos,
 	   the lower the angle is, so at higher angles take a lower value
 	   and diffuse lesser light. */
-	float diff = max(dot(normal, lightDirection), 0.0f);
+	float diff = max(dot(outNormal, lightDirection), 0.0f);
 	vec3 diffuse = diff * material.diffuse;
 
 	vec3 viewDirection = normalize(camPos - objPos); // Calculate vector of view direction
 	// Reflection direction is tangent to light direction and is calculated depending on the direction of normal vector
-	vec3 reflectionDirection = reflect(-lightDirection, normal);
+	vec3 reflectionDirection = reflect(-lightDirection, outNormal);
 	/* Calculate cos between view direction and light reflection.
 	   Take the maximum between this and 0.
 	   Raise the result to the power of 8 (or choose any other constant),

@@ -24,7 +24,7 @@ void main()
 	color = objColor; // Send the uniform object color to the fragment shader
 	//color = vColor; // Send each vertex color to the fragment shader
 	textCoord = vTextCoord; // Send texture coordinates to the fragment shader
-	normal = vNormal; // Send normals to the fragment shader
+	normal = mat3(transpose(inverse(model))) * vNormal; // Transform normals into world space
 
 	// Calculate the global position of the object with the use of the model matrix and the local position
 	objPos = vec3(model * vec4(vPos, 1.0));
